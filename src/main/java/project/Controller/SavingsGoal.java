@@ -1,54 +1,43 @@
 package com.finance.controller;
  
-import com.finance.model.Budget;
-import com.finance.model.Transaction;
-import com.finance.repo.BudgetRepo;
-import com.finance.repo.TransactionRepo;
+import com.finance.model.SavingsGoal;
+import com.finance.repo.SavingsGoalRepo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
  
 @RestController
-@RequestMapping("/api/budgets")
-public class BudgetController {
+@RequestMapping("/api/goals")
+public class SavingsGoalController {
  
-    @Autowired private BudgetRepo repo;
-    @Autowired private TransactionRepo txRepo;
+    @Autowired private SavingsGoalRepo repo;
  
-    @GetMapping public List<Budget> all() { return repo.findAll(); }
- 
-    @GetMapping("/{id}") public Budget one(@PathVariable Long id) { return repo.findById(id).orElse(null); }
- 
-    @PostMapping public Budget create(@RequestBody Budget b) { return repo.save(b); }
- 
-    @PutMapping("/{id}")
-    public Budget update(@PathVariable Long id, @RequestBody Budget b) {
-        b.setId(id); return repo.save(b);
+    @GetMapping public List<SavingsGoal> all() { return repo.findAll(); }
+    @GetMapping("/{id}") public SavingsGoal one(@PathVariable Long id) { return repo.findById(id).orElse(null); }
+    @PostMapping public SavingsGoal create(@RequestBody SavingsGoal g) {
+        if (g.getSavedAmount() == null) g.setSavedAmount(0.0);
+        return repo.save(g);
     }
- 
+    @PutMapping("/{id}")
+    public SavingsGoal update(@PathVariable Long id, @RequestBody SavingsGoal g) {
+        g.setId(id); return repo.save(g);
+    }
     @DeleteMapping("/{id}")
     public String delete(@PathVariable Long id) { repo.deleteById(id); return "Deleted"; }
  
-    @GetMapping("/status")
-    public List<Map<String,Object>> status() {
-        LocalDate start = LocalDate.now().withDayOfMonth(1);
-        List<Transaction> txs = txRepo.findByDateBetween(start, LocalDate.now());
-        List<Map<String,Object>> result = new ArrayList<>();
-        for (Budget b : repo.findAll()) {
-            double spent = txs.stream()
-                .filter(t -> b.getCategory().equalsIgnoreCase(t.getCategory()) && "EXPENSE".equals(t.getType()))
-                .mapToDouble(Transaction::getAmount).sum();
-            double pct = b.getMonthlyLimit() == 0 ? 0 : (spent / b.getMonthlyLimit()) * 100;
-            Map<String,Object> m = new HashMap<>();
-            m.put("category", b.getCategory());
-            m.put("limit", b.getMonthlyLimit());
-            m.put("spent", spent);
-            m.put("percent", Math.round(pct));
-            m.put("alert", pct >= 80 ? "You have used " + Math.round(pct) + "% of your " + b.getCategory() + " budget" : null);
-            result.add(m);
-        }
-        return result;
+    @GetMapping("/{id}/plan")
+    public Map<String,Object> plan(@PathVariable Long id) {
+        SavingsGoal g = repo.findById(id).orElseThrow();
+        long months = Math.max(1, ChronoUnit.MONTHS.between(LocalDate.now(), g.getTargetDate()));
+        double remaining = g.getTargetAmount() - g.getSavedAmount();
+        double perMonth = remaining / months;
+        Map<String,Object> m = new HashMap<>();
+        m.put("goal", g.getGoalName());
+        m.put("monthsLeft", months);
+        m.put("requiredMonthlySaving", Math.round(perMonth));
+        m.put("expectedCompletion", g.getTargetDate());
+        return m;
     }
 }
- 
