@@ -1,0 +1,54 @@
+import { useEffect, useState } from "react";
+import { api } from "../api";
+ 
+export default function Bills() {
+  const [items, setItems] = useState([]);
+  const [upcoming, setUpcoming] = useState([]);
+  const [form, setForm] = useState({ name:"", amount:"", dueDate:"", paid:false });
+ 
+  const load = () => {
+    api.get("/bills").then(r => setItems(r.data));
+    api.get("/bills/upcoming").then(r => setUpcoming(r.data));
+  };
+  useEffect(() => { load(); }, []);
+ 
+  const save = async () => {
+    await api.post("/bills", { ...form, amount: parseFloat(form.amount) });
+    load();
+  };
+  const togglePaid = async b => { await api.put("/bills/" + b.id, { ...b, paid: !b.paid }); load(); };
+  const del = async id => { await api.delete("/bills/" + id); load(); };
+ 
+  return (
+    <div>
+      <h1>Bill Reminders</h1>
+      <div className="card">
+        <input placeholder="Bill name" value={form.name} onChange={e=>setForm({...form,name:e.target.value})}/>
+        <input type="number" placeholder="Amount" value={form.amount} onChange={e=>setForm({...form,amount:e.target.value})}/>
+        <input type="date" value={form.dueDate} onChange={e=>setForm({...form,dueDate:e.target.value})}/>
+        <button onClick={save}>Add</button>
+      </div>
+      <div className="card">
+        <h3>Upcoming (next 7 days)</h3>
+        {upcoming.length === 0 ? <p>No upcoming bills</p> :
+          upcoming.map(b => <div key={b.id} className="alert">{b.name} — ₹{b.amount} due {b.dueDate}</div>)}
+      </div>
+      <div className="card">
+        <table>
+          <thead><tr><th>Name</th><th>Amount</th><th>Due</th><th>Paid</th><th></th></tr></thead>
+          <tbody>
+            {items.map(b => (
+              <tr key={b.id}>
+                <td>{b.name}</td><td>₹{b.amount}</td><td>{b.dueDate}</td>
+                <td><input type="checkbox" checked={b.paid} onChange={()=>togglePaid(b)}/></td>
+                <td><button className="del" onClick={()=>del(b.id)}>Delete</button></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+api.post - /
+ 
