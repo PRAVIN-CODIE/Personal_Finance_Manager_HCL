@@ -1,0 +1,43 @@
+import { useEffect, useState } from "react";
+import { api } from "../api";
+ 
+export default function Dashboard() {
+  const [summary, setSummary] = useState({});
+  const [insights, setInsights] = useState([]);
+  const [predict, setPredict] = useState({});
+  const [suggest, setSuggest] = useState([]);
+ 
+  useEffect(() => {
+    api.get("/transactions/report/summary").then(r => setSummary(r.data));
+    api.get("/ai/analysis").then(r => setInsights(r.data));
+    api.get("/ai/predict").then(r => setPredict(r.data));
+    api.get("/ai/suggestions").then(r => setSuggest(r.data));
+  }, []);
+ 
+  return (
+    <div>
+      <h1>Dashboard</h1>
+      <div className="card">
+        <h3>Summary</h3>
+        <p>Income: ₹{summary.income || 0}</p>
+        <p>Expense: ₹{summary.expense || 0}</p>
+        <p><b>Balance: ₹{summary.balance || 0}</b></p>
+      </div>
+      <div className="card">
+        <h3> AI Insights</h3>
+        {insights.map((i, k) => <div key={k} className="insight">{i}</div>)}
+      </div>
+      <div className="card">
+        <h3>Next Month Prediction</h3>
+        {Object.entries(predict).map(([k, v]) => (
+          <div key={k}>{k}: ₹{v}</div>
+        ))}
+      </div>
+      <div className="card">
+        <h3>Savings Suggestions</h3>
+        {suggest.map((s, k) => <div key={k} className="insight">{s}</div>)}
+      </div>
+    </div>
+  );
+}
+ 
