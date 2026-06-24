@@ -1,0 +1,33 @@
+import { useState } from "react";
+import { api } from "../api";
+ 
+export default function Chatbot() {
+  const [q, setQ] = useState("");
+  const [chat, setChat] = useState([]);
+ 
+  const send = async () => {
+    if (!q) return;
+    const r = await api.post("/ai/chat", { question: q });
+    setChat([...chat, { q, a: r.data.answer }]);
+    setQ("");
+  };
+ 
+  return (
+    <div>
+      <h1>AI Finance Chatbot</h1>
+      <div className="card">
+        <input style={{width:"70%"}} value={q} placeholder="Ask: How much did I spend last month?"
+               onChange={e=>setQ(e.target.value)} onKeyDown={e=>e.key==="Enter"&&send()}/>
+        <button onClick={send}>Ask</button>
+      </div>
+      {chat.map((c, i) => (
+        <div key={i} className="card">
+          <p><b>You:</b> {c.q}</p>
+          <p><b>Bot:</b> {c.a}</p>
+        </div>
+      ))}
+    </div>
+  );
+}
+api.post - /
+ 
