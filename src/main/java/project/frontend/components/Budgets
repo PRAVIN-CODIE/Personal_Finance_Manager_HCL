@@ -1,0 +1,65 @@
+import { useEffect, useState } from "react";
+import { api } from "../api";
+ 
+export default function Budgets() {
+  const [items, setItems] = useState([]);
+  const [status, setStatus] = useState([]);
+  const [form, setForm] = useState({ category: "Food", monthlyLimit: "" });
+ 
+  const load = () => {
+    api.get("/budgets").then(r => setItems(r.data));
+    api.get("/budgets/status").then(r => setStatus(r.data));
+  };
+  useEffect(() => { load(); }, []);
+ 
+  const save = async () => {
+    await api.post("/budgets", { ...form, monthlyLimit: parseFloat(form.monthlyLimit) });
+    load();
+  };
+  const del = async id => { await api.delete("/budgets/" + id); load(); };
+  const update = async (id, limit) => {
+    const b = items.find(x => x.id === id);
+    await api.put("/budgets/" + id, { ...b, monthlyLimit: parseFloat(limit) });
+    load();
+  };
+ 
+  return (
+    <div>
+      <h1>Budgets</h1>
+      <div className="card">
+        <select value={form.category} onChange={e=>setForm({...form,category:e.target.value})}>
+          {["Food","Transport","Shopping","Bills","Entertainment","Other"].map(c=><option key={c}>{c}</option>)}
+        </select>
+        <input type="number" placeholder="Monthly limit" value={form.monthlyLimit}
+               onChange={e=>setForm({...form,monthlyLimit:e.target.value})}/>
+        <button onClick={save}>Add Budget</button>
+      </div>
+      <div className="card">
+        <h3>Status</h3>
+        {status.map((s,i) => (
+          <div key={i}>
+            <b>{s.category}</b>: ₹{s.spent}/₹{s.limit} ({s.percent}%)
+            {s.alert && <div className="alert"> {s.alert}</div>}
+          </div>
+        ))}
+      </div>
+      <div className="card">
+        <table>
+          <thead><tr><th>Category</th><th>Limit</th><th>Update</th><th></th></tr></thead>
+          <tbody>
+            {items.map(b => (
+              <tr key={b.id}>
+                <td>{b.category}</td><td>₹{b.monthlyLimit}</td>
+                <td><input type="number" defaultValue={b.monthlyLimit}
+                           onBlur={e=>update(b.id, e.target.value)}/></td>
+                <td><button className="del" onClick={()=>del(b.id)}>Delete</button></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+api.post - /
+ 
