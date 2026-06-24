@@ -1,0 +1,54 @@
+import { useEffect, useState } from "react";
+import { api } from "../api";
+ 
+export default function Goals() {
+  const [items, setItems] = useState([]);
+  const [plans, setPlans] = useState({});
+  const [form, setForm] = useState({ goalName:"", targetAmount:"", savedAmount:"0", targetDate:"" });
+ 
+  const load = async () => {
+    const r = await api.get("/goals");
+    setItems(r.data);
+    const p = {};
+    for (const g of r.data) {
+      const x = await api.get(`/goals/${g.id}/plan`);
+      p[g.id] = x.data;
+    }
+    setPlans(p);
+  };
+  useEffect(() => { load(); }, []);
+ 
+  const save = async () => {
+    await api.post("/goals", {
+      ...form,
+      targetAmount: parseFloat(form.targetAmount),
+      savedAmount: parseFloat(form.savedAmount)
+    });
+    load();
+  };
+  const del = async id => { await api.delete("/goals/" + id); load(); };
+ 
+  return (
+    <div>
+      <h1>Savings Goals</h1>
+      <div className="card">
+        <input placeholder="Goal name" value={form.goalName} onChange={e=>setForm({...form,goalName:e.target.value})}/>
+        <input type="number" placeholder="Target ₹" value={form.targetAmount} onChange={e=>setForm({...form,targetAmount:e.target.value})}/>
+        <input type="number" placeholder="Saved ₹" value={form.savedAmount} onChange={e=>setForm({...form,savedAmount:e.target.value})}/>
+        <input type="date" value={form.targetDate} onChange={e=>setForm({...form,targetDate:e.target.value})}/>
+        <button onClick={save}>Add Goal</button>
+      </div>
+      {items.map(g => (
+        <div className="card" key={g.id}>
+          <h3>{g.goalName}</h3>
+          <p>Target ₹{g.targetAmount} | Saved ₹{g.savedAmount} | Date {g.targetDate}</p>
+          {plans[g.id] && (
+            <p>Save ₹{plans[g.id].requiredMonthlySaving}/month for {plans[g.id].monthsLeft} months</p>
+          )}
+          <button className="del" onClick={()=>del(g.id)}>Delete</button>
+        </div>
+      ))}
+    </div>
+  );
+}
+ 
