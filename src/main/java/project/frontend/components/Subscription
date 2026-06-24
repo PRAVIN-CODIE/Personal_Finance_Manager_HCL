@@ -1,0 +1,50 @@
+import { useEffect, useState } from "react";
+import { api } from "../api";
+ 
+export default function Subscriptions() {
+  const [items, setItems] = useState([]);
+  const [total, setTotal] = useState(0);
+  const [form, setForm] = useState({ name:"", monthlyCost:"", renewalCycle:"MONTHLY", active:true });
+ 
+  const load = () => {
+    api.get("/subscriptions").then(r => setItems(r.data));
+    api.get("/subscriptions/total").then(r => setTotal(r.data.monthlyTotal));
+  };
+  useEffect(() => { load(); }, []);
+ 
+  const save = async () => {
+    await api.post("/subscriptions", { ...form, monthlyCost: parseFloat(form.monthlyCost) });
+    load();
+  };
+  const del = async id => { await api.delete("/subscriptions/" + id); load(); };
+ 
+  return (
+    <div>
+      <h1>Subscriptions</h1>
+      <div className="card"><b>Total Monthly: ₹{total}</b></div>
+      <div className="card">
+        <input placeholder="Name" value={form.name} onChange={e=>setForm({...form,name:e.target.value})}/>
+        <input type="number" placeholder="Monthly ₹" value={form.monthlyCost} onChange={e=>setForm({...form,monthlyCost:e.target.value})}/>
+        <select value={form.renewalCycle} onChange={e=>setForm({...form,renewalCycle:e.target.value})}>
+          <option>MONTHLY</option><option>YEARLY</option>
+        </select>
+        <button onClick={save}>Add</button>
+      </div>
+      <div className="card">
+        <table>
+          <thead><tr><th>Name</th><th>Cost</th><th>Cycle</th><th></th></tr></thead>
+          <tbody>
+            {items.map(s => (
+              <tr key={s.id}>
+                <td>{s.name}</td><td>₹{s.monthlyCost}</td><td>{s.renewalCycle}</td>
+                <td><button className="del" onClick={()=>del(s.id)}>Delete</button></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+api.post - /
+ 
