@@ -1,0 +1,37 @@
+import { BrowserRouter, Routes, Route, Link } from "react-router-dom";
+import Transactions from "./pages/Transactions";
+import Budgets from "./pages/Budgets";
+import Goals from "./pages/Goals";
+import Bills from "./pages/Bills";
+import Subscriptions from "./pages/Subscriptions";
+import Dashboard from "./pages/Dashboard";
+import Chatbot from "./pages/Chatbot";
+import "./App.css";
+ 
+export default function App() {
+  return (
+    <BrowserRouter>
+      <nav className="nav">
+        <h2> Finance Manager</h2>
+        <Link to="/">Dashboard</Link>
+        <Link to="/transactions">Transactions</Link>
+        <Link to="/budgets">Budgets</Link>
+        <Link to="/goals">Goals</Link>
+        <Link to="/bills">Bills</Link>
+        <Link to="/subs">Subscriptions</Link>
+        <Link to="/chat">AI Chat</Link>
+      </nav>
+      <div className="container">
+        <Routes>
+          <Route path="/" element={<Dashboard />} />
+          <Route path="/transactions" element={<Transactions />} />
+          <Route path="/budgets" element={<Budgets />} />
+          <Route path="/goals" element={<Goals />} />
+          <Route path="/bills" element={<Bills />} />
+          <Route path="/subs" element={<Subscriptions />} />
+          <Route path="/chat" element={<Chatbot />} />
+        </Routes>
+      </div>
+    </BrowserRouter>
+  );
+}
