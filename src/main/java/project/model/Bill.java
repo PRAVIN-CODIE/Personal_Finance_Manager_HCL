@@ -4,15 +4,15 @@ import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDate;
  
-@Entity 
+@Entity
 @Data 
 @NoArgsConstructor 
 @AllArgsConstructor
-public class SavingsGoal {
+public class Bill {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    private String goalName;
-    private Double targetAmount;
-    private Double savedAmount;
-    private LocalDate targetDate;
+    private String name;
+    private Double amount;
+    private LocalDate dueDate;
+    private Boolean paid;
 }
